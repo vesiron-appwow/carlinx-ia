@@ -1,0 +1,276 @@
+---
+// components/SearchForm.astro
+// All fields are optional — no required attributes.
+import { POPULAR_MAKES, OTHER_MAKES } from '../lib/makes';
+
+const params = Astro.url?.searchParams ?? new URLSearchParams();
+const v = (key: string) => params.get(key) ?? '';
+---
+
+<section class="hero">
+  <div class="hero-inner">
+    <p class="hero-label">Global Vehicle Discovery</p>
+    <h1 class="hero-title">Find Your Next<br><em>Great Drive</em></h1>
+    <p class="hero-sub">Search vehicles from private sellers and dealers worldwide.</p>
+
+    <form class="search-panel" method="GET" action="/">
+
+      <!-- MAKE — full global dropdown -->
+      <div class="field">
+        <label for="make">Make</label>
+        <select name="make" id="make">
+          <option value="">Any Make</option>
+          <optgroup label="Popular Makes">
+            {POPULAR_MAKES.map(m => (
+              <option value={m} selected={v('make') === m}>{m}</option>
+            ))}
+          </optgroup>
+          <optgroup label="Other Makes">
+            {OTHER_MAKES.map(m => (
+              <option value={m} selected={v('make') === m}>{m}</option>
+            ))}
+          </optgroup>
+          <option value="__other__" selected={v('make') === '__other__'}>Other / Not Listed</option>
+        </select>
+        <!-- Self-fill field — shown when "Other / Not Listed" selected -->
+        <input
+          type="text"
+          name="make_custom"
+          id="make_custom"
+          placeholder="Enter make…"
+          class="make-custom"
+          value={v('make_custom')}
+          style="display:none; margin-top:0.4rem;"
+        />
+      </div>
+
+      <!-- MODEL -->
+      <div class="field">
+        <label for="model">Model</label>
+        <input type="text" name="model" id="model" placeholder="e.g. Golf, X5, Corolla…" value={v('model')} />
+      </div>
+
+      <!-- MIN PRICE -->
+      <div class="field">
+        <label for="min_price">Min Price</label>
+        <select name="min_price" id="min_price">
+          <option value="">No Min</option>
+          <option value="1000"  selected={v('min_price')==='1000'}>£1,000</option>
+          <option value="2500"  selected={v('min_price')==='2500'}>£2,500</option>
+          <option value="5000"  selected={v('min_price')==='5000'}>£5,000</option>
+          <option value="10000" selected={v('min_price')==='10000'}>£10,000</option>
+          <option value="15000" selected={v('min_price')==='15000'}>£15,000</option>
+          <option value="20000" selected={v('min_price')==='20000'}>£20,000</option>
+          <option value="30000" selected={v('min_price')==='30000'}>£30,000</option>
+          <option value="50000" selected={v('min_price')==='50000'}>£50,000</option>
+          <option value="75000" selected={v('min_price')==='75000'}>£75,000</option>
+        </select>
+      </div>
+
+      <!-- MAX PRICE -->
+      <div class="field">
+        <label for="max_price">Max Price</label>
+        <select name="max_price" id="max_price">
+          <option value="">No Max</option>
+          <option value="5000"   selected={v('max_price')==='5000'}>£5,000</option>
+          <option value="10000"  selected={v('max_price')==='10000'}>£10,000</option>
+          <option value="15000"  selected={v('max_price')==='15000'}>£15,000</option>
+          <option value="20000"  selected={v('max_price')==='20000'}>£20,000</option>
+          <option value="30000"  selected={v('max_price')==='30000'}>£30,000</option>
+          <option value="50000"  selected={v('max_price')==='50000'}>£50,000</option>
+          <option value="75000"  selected={v('max_price')==='75000'}>£75,000</option>
+          <option value="100000" selected={v('max_price')==='100000'}>£100,000</option>
+          <option value="200000" selected={v('max_price')==='200000'}>£200,000+</option>
+        </select>
+      </div>
+
+      <!-- MAX MILEAGE -->
+      <div class="field">
+        <label for="max_mileage">Max Mileage</label>
+        <select name="max_mileage" id="max_mileage">
+          <option value="">Any</option>
+          <option value="10000"  selected={v('max_mileage')==='10000'}>Under 10,000</option>
+          <option value="20000"  selected={v('max_mileage')==='20000'}>Under 20,000</option>
+          <option value="40000"  selected={v('max_mileage')==='40000'}>Under 40,000</option>
+          <option value="60000"  selected={v('max_mileage')==='60000'}>Under 60,000</option>
+          <option value="80000"  selected={v('max_mileage')==='80000'}>Under 80,000</option>
+          <option value="100000" selected={v('max_mileage')==='100000'}>Under 100,000</option>
+        </select>
+      </div>
+
+      <!-- FUEL TYPE -->
+      <div class="field">
+        <label for="fuel">Fuel Type</label>
+        <select name="fuel" id="fuel">
+          <option value="">Any</option>
+          <option value="Petrol"   selected={v('fuel')==='Petrol'}>Petrol</option>
+          <option value="Diesel"   selected={v('fuel')==='Diesel'}>Diesel</option>
+          <option value="Hybrid"   selected={v('fuel')==='Hybrid'}>Hybrid</option>
+          <option value="Electric" selected={v('fuel')==='Electric'}>Electric</option>
+          <option value="PHEV"     selected={v('fuel')==='PHEV'}>Plug-in Hybrid</option>
+          <option value="LPG"      selected={v('fuel')==='LPG'}>LPG</option>
+          <option value="Hydrogen" selected={v('fuel')==='Hydrogen'}>Hydrogen</option>
+        </select>
+      </div>
+
+      <!-- TRANSMISSION -->
+      <div class="field">
+        <label for="transmission">Gearbox</label>
+        <select name="transmission" id="transmission">
+          <option value="">Any</option>
+          <option value="Manual"    selected={v('transmission')==='Manual'}>Manual</option>
+          <option value="Automatic" selected={v('transmission')==='Automatic'}>Automatic</option>
+          <option value="Semi-Auto" selected={v('transmission')==='Semi-Auto'}>Semi-Auto</option>
+          <option value="CVT"       selected={v('transmission')==='CVT'}>CVT</option>
+        </select>
+      </div>
+
+      <!-- YEAR FROM -->
+      <div class="field">
+        <label for="year_from">Year From</label>
+        <select name="year_from" id="year_from">
+          <option value="">Any Year</option>
+          {Array.from({ length: 30 }, (_, i) => 2025 - i).map(y => (
+            <option value={String(y)} selected={v('year_from') === String(y)}>{y}</option>
+          ))}
+        </select>
+      </div>
+
+      <!-- BODY TYPE -->
+      <div class="field">
+        <label for="body_type">Body Type</label>
+        <select name="body_type" id="body_type">
+          <option value="">Any</option>
+          <option value="Saloon"      selected={v('body_type')==='Saloon'}>Saloon</option>
+          <option value="Hatchback"   selected={v('body_type')==='Hatchback'}>Hatchback</option>
+          <option value="Estate"      selected={v('body_type')==='Estate'}>Estate</option>
+          <option value="SUV"         selected={v('body_type')==='SUV'}>SUV / 4x4</option>
+          <option value="Coupe"       selected={v('body_type')==='Coupe'}>Coupé</option>
+          <option value="Convertible" selected={v('body_type')==='Convertible'}>Convertible</option>
+          <option value="MPV"         selected={v('body_type')==='MPV'}>MPV / People Carrier</option>
+          <option value="Van"         selected={v('body_type')==='Van'}>Van / Commercial</option>
+          <option value="Pickup"      selected={v('body_type')==='Pickup'}>Pickup</option>
+        </select>
+      </div>
+
+      <!-- LOCATION (text, optional) -->
+      <div class="field">
+        <label for="location">Location</label>
+        <input type="text" name="location" id="location" placeholder="City, region or postcode…" value={v('location')} />
+      </div>
+
+      <button type="submit" class="btn-search">Search Vehicles</button>
+
+    </form>
+  </div>
+</section>
+
+<style>
+  .hero {
+    background: linear-gradient(135deg, #0C0C0C 0%, #1A1200 50%, #0C0C0C 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 3.5rem 2rem 2.5rem;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 70% 50%, rgba(255,168,0,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-inner { max-width: 1320px; margin: 0 auto; position: relative; }
+  .hero-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600; font-size: 0.75rem;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--amber); margin-bottom: 0.75rem;
+  }
+  .hero-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900; font-size: clamp(2.2rem, 5vw, 3.8rem);
+    color: white; line-height: 1; margin-bottom: 0.5rem;
+  }
+  .hero-title em { color: var(--amber); font-style: normal; }
+  .hero-sub { color: var(--mute); font-size: 1rem; margin-bottom: 2rem; }
+
+  .search-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) auto;
+    gap: 0.875rem;
+    align-items: end;
+  }
+
+  .field label {
+    display: block;
+    font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--mute); margin-bottom: 0.4rem;
+  }
+  .field select, .field input[type="text"] {
+    width: 100%;
+    background: var(--dark);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0.65rem 0.875rem;
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.9rem;
+    outline: none; appearance: none;
+    transition: border-color 0.2s;
+  }
+  .field select:focus, .field input:focus { border-color: var(--amber); }
+  .field select option, .field select optgroup { background: var(--dark); }
+
+  .btn-search {
+    padding: 0.65rem 1.75rem;
+    background: var(--amber); color: var(--black);
+    border: none; border-radius: 7px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: 1rem;
+    letter-spacing: 0.05em;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    align-self: end;
+  }
+  .btn-search:hover { background: var(--amber-d); transform: translateY(-1px); }
+
+  .make-custom {
+    width: 100%;
+    background: var(--dark);
+    border: 1px solid var(--amber);
+    border-radius: 7px;
+    padding: 0.65rem 0.875rem;
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+  }
+
+  @media (max-width: 768px) {
+    .search-panel { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 480px) {
+    .search-panel { grid-template-columns: 1fr; }
+  }
+</style>
+
+<script>
+  // Show/hide custom make input when "Other / Not Listed" is chosen
+  const makeSelect = document.getElementById('make') as HTMLSelectElement;
+  const makeCustom = document.getElementById('make_custom') as HTMLInputElement;
+
+  makeSelect?.addEventListener('change', () => {
+    const show = makeSelect.value === '__other__';
+    makeCustom.style.display = show ? 'block' : 'none';
+    if (show) makeCustom.focus();
+    if (!show) makeCustom.value = '';
+  });
+
+  // On page load, restore state
+  if (makeSelect?.value === '__other__') {
+    makeCustom.style.display = 'block';
+  }
+</script>

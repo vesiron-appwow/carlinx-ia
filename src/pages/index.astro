@@ -1,0 +1,263 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SearchPanel from '../components/SearchPanel.astro';
+import VehicleCard from '../components/VehicleCard.astro';
+import { getVehicles } from '../lib/api';
+
+// Grab all query params for search
+const url = new URL(Astro.request.url);
+const params: Record<string, string> = {};
+url.searchParams.forEach((v, k) => { if (v) params[k] = v; });
+
+// Build typed search params for API
+const searchParams = {
+  make:         params.make_custom || params.make || undefined,
+  model:        params.model       || undefined,
+  fuel:         params.fuel        || undefined,
+  transmission: params.transmission|| undefined,
+  body_type:    params.body_type   || undefined,
+  min_price:    params.min_price   ? Number(params.min_price)   : undefined,
+  max_price:    params.max_price   ? Number(params.max_price)   : undefined,
+  max_mileage:  params.max_mileage ? Number(params.max_mileage) : undefined,
+  year_from:    params.year_from   ? Number(params.year_from)   : undefined,
+  location:     params.location    || undefined,
+  sort:         params.sort        || 'created_at_desc',
+  page:         params.page        ? Number(params.page) : 1,
+  limit:        24,
+};
+
+const { vehicles, total } = await getVehicles(searchParams, Astro.locals.runtime?.env
+  ? Astro.locals.runtime.env.fetch ?? fetch
+  : fetch
+);
+
+const hasSearch = Object.values(searchParams).some(
+  v => v !== undefined && v !== 24 && v !== 1 && v !== 'created_at_desc'
+);
+
+const totalPages = Math.ceil(total / 24);
+const currentPage = searchParams.page ?? 1;
+
+function buildPageUrl(page: number) {
+  const p = new URLSearchParams(url.searchParams);
+  p.set('page', String(page));
+  return `/?${p.toString()}`;
+}
+---
+
+<BaseLayout
+  title="CarLinx — Global Vehicle Discovery"
+  description="Search millions of vehicles for sale worldwide. Filter by make, model, price, mileage, fuel type and more."
+>
+
+  <!-- HERO -->
+  <section class="hero" aria-label="CarLinx — Vehicle Discovery">
+    <div class="hero-inner">
+      <p class="hero-eyebrow">Global Vehicle Discovery</p>
+      <h1 class="hero-title">Find Your Next<br /><em>Great Drive</em></h1>
+      <p class="hero-sub">Search vehicles for sale worldwide — every make, every price point.</p>
+    </div>
+  </section>
+
+  <!-- SEARCH -->
+  <SearchPanel params={params} />
+
+  <!-- FILTER / SORT BAR -->
+  <div class="results-bar">
+    <div class="results-inner">
+      <p class="results-count" aria-live="polite">
+        {total > 0
+          ? <><strong>{total.toLocaleString('en-GB')}</strong> vehicle{total !== 1 ? 's' : ''} found</>
+          : hasSearch
+            ? 'No vehicles matched your search'
+            : 'Enter your search criteria above'
+        }
+      </p>
+
+      <div class="sort-group">
+        <label for="sort-select">Sort</label>
+        <form method="get" id="sort-form">
+          {Object.entries(params).filter(([k]) => k !== 'sort' && k !== 'page').map(([k, v]) => (
+            <input type="hidden" name={k} value={v} />
+          ))}
+          <select id="sort-select" name="sort" onchange="this.form.submit()" aria-label="Sort results">
+            <option value="created_at_desc" selected={!params.sort || params.sort === 'created_at_desc'}>Newest Listed</option>
+            <option value="price_asc"       selected={params.sort === 'price_asc'}>Price: Low–High</option>
+            <option value="price_desc"      selected={params.sort === 'price_desc'}>Price: High–Low</option>
+            <option value="mileage_asc"     selected={params.sort === 'mileage_asc'}>Mileage: Low–High</option>
+            <option value="year_desc"       selected={params.sort === 'year_desc'}>Year: Newest</option>
+          </select>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- VEHICLE GRID -->
+  {vehicles.length > 0 ? (
+    <section class="grid-section" aria-label="Vehicle results">
+      <div class="vehicle-grid">
+        {vehicles.map((v, i) => (
+          <div class="fade-up" style={`animation-delay:${Math.min(i * 0.05, 0.4)}s`}>
+            <VehicleCard vehicle={v} />
+          </div>
+        ))}
+      </div>
+
+      <!-- PAGINATION -->
+      {totalPages > 1 && (
+        <nav class="pagination" aria-label="Page navigation">
+          {currentPage > 1 && (
+            <a href={buildPageUrl(currentPage - 1)} class="page-btn">← Prev</a>
+          )}
+          <span class="page-info">Page {currentPage} of {totalPages}</span>
+          {currentPage < totalPages && (
+            <a href={buildPageUrl(currentPage + 1)} class="page-btn">Next →</a>
+          )}
+        </nav>
+      )}
+    </section>
+  ) : hasSearch ? (
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <h2>No vehicles found</h2>
+      <p>Try adjusting your search criteria — remove some filters to see more results.</p>
+      <a href="/" class="btn-clear">Clear all filters</a>
+    </div>
+  ) : (
+    <div class="empty-state">
+      <div class="empty-icon">🚗</div>
+      <h2>Start your search</h2>
+      <p>Use the filters above to find your next vehicle.</p>
+    </div>
+  )}
+
+</BaseLayout>
+
+<script>
+  // Save / unsave toggle — persists to localStorage
+  function toggleSave(btn: HTMLButtonElement) {
+    const id = btn.dataset.vehicleId;
+    if (!id) return;
+    const saved: string[] = JSON.parse(localStorage.getItem('cl_saved') ?? '[]');
+    const idx = saved.indexOf(id);
+    if (idx > -1) {
+      saved.splice(idx, 1);
+      btn.classList.remove('saved');
+      btn.setAttribute('aria-label', btn.getAttribute('aria-label')?.replace('Remove', 'Save') ?? '');
+    } else {
+      saved.push(id);
+      btn.classList.add('saved');
+    }
+    localStorage.setItem('cl_saved', JSON.stringify(saved));
+  }
+
+  // Restore saved state on load
+  document.addEventListener('DOMContentLoaded', () => {
+    const saved: string[] = JSON.parse(localStorage.getItem('cl_saved') ?? '[]');
+    saved.forEach(id => {
+      const btn = document.querySelector<HTMLButtonElement>(`.save-btn[data-vehicle-id="${id}"]`);
+      if (btn) btn.classList.add('saved');
+    });
+  });
+
+  // Make the function globally accessible
+  (window as any).toggleSave = toggleSave;
+</script>
+
+<style>
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(150deg, #0C0C0C 0%, #160D00 60%, #0C0C0C 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 3.5rem 1.5rem 3rem;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 90% at 75% 50%, rgba(255,168,0,0.07), transparent 70%);
+    pointer-events: none;
+  }
+  .hero-inner { max-width: 1320px; margin: 0 auto; position: relative; }
+  .hero-eyebrow {
+    font-family: var(--font-head); font-weight: 700;
+    font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--amber); margin-bottom: 0.75rem;
+  }
+  .hero-title {
+    font-family: var(--font-head); font-weight: 900;
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    color: white; line-height: 1; margin-bottom: 0.6rem;
+  }
+  .hero-title em { color: var(--amber); font-style: normal; }
+  .hero-sub { color: var(--mute); font-size: 1.05rem; }
+
+  /* ── RESULTS BAR ── */
+  .results-bar {
+    border-bottom: 1px solid var(--border);
+    padding: 0.875rem 1.5rem;
+    background: var(--dark);
+  }
+  .results-inner {
+    max-width: 1320px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 0.75rem;
+  }
+  .results-count { font-size: 0.95rem; color: var(--mute); }
+  .results-count strong { color: var(--amber); font-size: 1.15rem; }
+
+  .sort-group { display: flex; align-items: center; gap: 0.5rem; }
+  .sort-group label { font-size: 0.8rem; color: var(--mute); font-weight: 600; }
+  .sort-group select {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 7px; padding: 0.4rem 0.75rem;
+    color: var(--text); font-family: var(--font-body); font-size: 0.875rem; outline: none;
+  }
+
+  /* ── GRID ── */
+  .grid-section { max-width: 1320px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  .vehicle-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 3rem;
+  }
+
+  /* ── PAGINATION ── */
+  .pagination {
+    display: flex; align-items: center; justify-content: center; gap: 1.25rem;
+    padding-top: 1rem; border-top: 1px solid var(--border);
+  }
+  .page-btn {
+    padding: 0.6rem 1.25rem; border-radius: 7px;
+    border: 1px solid var(--border); background: var(--panel);
+    color: var(--text); text-decoration: none; font-weight: 600;
+    transition: all 0.2s;
+  }
+  .page-btn:hover { border-color: var(--amber); color: var(--amber); }
+  .page-info { color: var(--mute); font-size: 0.9rem; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    max-width: 460px; margin: 5rem auto; padding: 0 1.5rem;
+    text-align: center;
+  }
+  .empty-icon { font-size: 3.5rem; margin-bottom: 1.25rem; }
+  .empty-state h2 {
+    font-family: var(--font-head); font-weight: 800; font-size: 1.8rem;
+    color: white; margin-bottom: 0.75rem;
+  }
+  .empty-state p { color: var(--mute); margin-bottom: 1.5rem; }
+  .btn-clear {
+    display: inline-block; padding: 0.7rem 1.5rem;
+    background: var(--amber); color: var(--black);
+    border-radius: 7px; font-family: var(--font-head);
+    font-weight: 700; font-size: 1rem; text-decoration: none;
+    transition: background 0.2s;
+  }
+  .btn-clear:hover { background: var(--amber-d); }
+
+  @media (max-width: 640px) {
+    .vehicle-grid { grid-template-columns: 1fr; }
+  }
+</style>

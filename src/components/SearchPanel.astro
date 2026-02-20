@@ -1,0 +1,221 @@
+---
+import { MAJOR_MAKES, ALL_MAKES } from '../lib/makes';
+
+export interface Props {
+  params?: Record<string, string>;
+}
+
+const { params = {} } = Astro.props;
+
+const fuels = ['Petrol', 'Diesel', 'Hybrid', 'Electric', 'Hydrogen', 'LPG', 'Other'];
+const transmissions = ['Automatic', 'Manual', 'Semi-Automatic', 'CVT'];
+const bodyTypes = ['Saloon', 'Hatchback', 'Estate', 'SUV', 'Coupe', 'Convertible', 'MPV', 'Van', 'Pickup', 'Other'];
+const years = Array.from({ length: 35 }, (_, i) => 2025 - i);
+---
+
+<section class="search-section" aria-label="Vehicle search">
+  <form class="search-panel" method="get" action="/" id="search-form">
+
+    <!-- Make -->
+    <div class="field">
+      <label for="s-make">Make</label>
+      <select id="s-make" name="make" onchange="handleMakeChange(this)">
+        <option value="">Any Make</option>
+        <optgroup label="── Popular Makes ──">
+          {MAJOR_MAKES.map(m => (
+            <option value={m} selected={params.make === m}>{m}</option>
+          ))}
+        </optgroup>
+        <optgroup label="── All Makes ──">
+          {ALL_MAKES.filter(m => !MAJOR_MAKES.includes(m)).map(m => (
+            <option value={m} selected={params.make === m}>{m}</option>
+          ))}
+        </optgroup>
+        <option value="__other__">Other / Not Listed</option>
+      </select>
+      <!-- Free-text fallback for unlisted makes -->
+      <input
+        type="text"
+        id="s-make-custom"
+        name="make_custom"
+        placeholder="Enter make…"
+        class="make-custom-input"
+        style="display:none; margin-top:0.4rem;"
+        value={params.make_custom ?? ''}
+      />
+    </div>
+
+    <!-- Model -->
+    <div class="field">
+      <label for="s-model">Model</label>
+      <input id="s-model" type="text" name="model" placeholder="e.g. Golf, X5, A3…" value={params.model ?? ''} />
+    </div>
+
+    <!-- Fuel -->
+    <div class="field">
+      <label for="s-fuel">Fuel</label>
+      <select id="s-fuel" name="fuel">
+        <option value="">Any</option>
+        {fuels.map(f => <option value={f.toLowerCase()} selected={params.fuel === f.toLowerCase()}>{f}</option>)}
+      </select>
+    </div>
+
+    <!-- Transmission -->
+    <div class="field">
+      <label for="s-transmission">Gearbox</label>
+      <select id="s-transmission" name="transmission">
+        <option value="">Any</option>
+        {transmissions.map(t => <option value={t.toLowerCase()} selected={params.transmission === t.toLowerCase()}>{t}</option>)}
+      </select>
+    </div>
+
+    <!-- Body Type -->
+    <div class="field">
+      <label for="s-body">Body Type</label>
+      <select id="s-body" name="body_type">
+        <option value="">Any</option>
+        {bodyTypes.map(b => <option value={b.toLowerCase()} selected={params.body_type === b.toLowerCase()}>{b}</option>)}
+      </select>
+    </div>
+
+    <!-- Min Price -->
+    <div class="field">
+      <label for="s-min-price">Min Price</label>
+      <select id="s-min-price" name="min_price">
+        <option value="">No Min</option>
+        {[1000,2500,5000,7500,10000,15000,20000,25000,30000,40000,50000,75000,100000].map(p => (
+          <option value={p} selected={params.min_price === String(p)}>
+            £{p.toLocaleString('en-GB')}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <!-- Max Price -->
+    <div class="field">
+      <label for="s-max-price">Max Price</label>
+      <select id="s-max-price" name="max_price">
+        <option value="">No Max</option>
+        {[5000,7500,10000,15000,20000,25000,30000,40000,50000,75000,100000,150000,200000].map(p => (
+          <option value={p} selected={params.max_price === String(p)}>
+            £{p.toLocaleString('en-GB')}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <!-- Max Mileage -->
+    <div class="field">
+      <label for="s-mileage">Max Mileage</label>
+      <select id="s-mileage" name="max_mileage">
+        <option value="">Any</option>
+        {[10000,20000,30000,40000,50000,60000,75000,100000,125000,150000].map(m => (
+          <option value={m} selected={params.max_mileage === String(m)}>
+            {m.toLocaleString('en-GB')} mi
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <!-- Year From -->
+    <div class="field">
+      <label for="s-year">Year From</label>
+      <select id="s-year" name="year_from">
+        <option value="">Any</option>
+        {years.map(y => (
+          <option value={y} selected={params.year_from === String(y)}>{y}</option>
+        ))}
+      </select>
+    </div>
+
+    <!-- Location -->
+    <div class="field">
+      <label for="s-location">Location</label>
+      <input id="s-location" type="text" name="location" placeholder="City, postcode, country…" value={params.location ?? ''} />
+    </div>
+
+    <!-- Search Button -->
+    <div class="field field-submit">
+      <button type="submit" class="btn-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        Search
+      </button>
+    </div>
+
+  </form>
+</section>
+
+<script is:inline>
+  function handleMakeChange(sel) {
+    const custom = document.getElementById('s-make-custom');
+    if (sel.value === '__other__') {
+      custom.style.display = 'block';
+      custom.required = true;
+      custom.focus();
+    } else {
+      custom.style.display = 'none';
+      custom.required = false;
+      custom.value = '';
+    }
+  }
+</script>
+
+<style>
+  .search-section {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 2rem 1.5rem;
+  }
+
+  .search-panel {
+    max-width: 1320px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    gap: 0.875rem;
+    align-items: end;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 0; }
+  .field label {
+    font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--mute); margin-bottom: 0.4rem;
+  }
+  .field select,
+  .field input[type="text"] {
+    width: 100%;
+    background: var(--dark);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0.65rem 0.875rem;
+    color: var(--text);
+    font-family: var(--font-body); font-size: 0.9rem;
+    outline: none; appearance: none;
+    transition: border-color 0.2s;
+  }
+  .field select:focus,
+  .field input:focus { border-color: var(--amber); }
+  .field select option, .field select optgroup {
+    background: var(--dark); color: var(--text);
+  }
+
+  .field-submit { justify-content: flex-end; }
+  .btn-search {
+    width: 100%; padding: 0.7rem 1rem;
+    background: var(--amber); color: var(--black);
+    border: none; border-radius: 7px;
+    font-family: var(--font-head); font-weight: 700; font-size: 1rem;
+    letter-spacing: 0.05em; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-search:hover { background: var(--amber-d); transform: translateY(-1px); }
+  .btn-search:active { transform: translateY(0); }
+
+  @media (max-width: 600px) {
+    .search-panel { grid-template-columns: 1fr 1fr; }
+    .field-submit { grid-column: 1 / -1; }
+  }
+</style>
