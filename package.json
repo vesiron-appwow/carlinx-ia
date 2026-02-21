@@ -5,17 +5,16 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
-    "check": "astro check"
+    "preview": "echo \"Astro preview is not supported for @astrojs/cloudflare. Use: npm run cf:pages\"",
+    "cf:pages": "wrangler pages dev",
+    "cf:pages:dist": "wrangler pages dev ./dist",
+    "cf:deploy": "wrangler pages deploy ./dist"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^10.0.0",
-    "astro": "^4.0.0"
+    "@astrojs/cloudflare": "^10.4.2",
+    "astro": "^4.16.19"
   },
   "devDependencies": {
-    "typescript": "^5.0.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "wrangler": "^4.67.0"
   }
 }
